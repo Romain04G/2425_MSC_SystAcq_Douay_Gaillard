@@ -31,9 +31,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 #define CMD_BUFFER_SIZE 64
 #define UART_RX_BUFFER_SIZE 1
 #define UART_TX_BUFFER_SIZE 64
+#define MAX_ARGS 9
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,14 +58,18 @@ UART_HandleTypeDef huart3;
 
 char cmd[CMD_BUFFER_SIZE]; //contenant la commande en cours
 int idxCmd; //contenant l'index du prochain caractère à remplir
-const uint8_t prompt[]; //contenant le prompt comme sur un shell linux
-const uint8_t started[]; //contenant un message de bienvenue au démarrage du microprocesseur
-const uint8_t newLine[]; //contenant la chaine de caractère pour faire un retour à la ligne
+const uint8_t prompt[]="user@Nucleo-STM32G431>>"; //contenant le prompt comme sur un shell linux
+const uint8_t started[]=
+						"\r\n*-----------------------------*"
+						"\r\n| Welcome on Nucleo-STM32G431 |"
+						"\r\n*-----------------------------*"
+						"\r\n";; //contenant un message de bienvenue au démarrage du microprocesseur
+const uint8_t newLine[]="\r\n"; //contenant la chaine de caractère pour faire un retour à la ligne
 const uint8_t help[]; //contenant le message d'aide, la liste des fonctions
 const uint8_t pinout[]; //contenant la liste des pin utilisées
-const uint8_t powerOn[]; //contenant le message d'allumage du moteur
-const uint8_t powerOff[]; //contenant le message d'extinction du moteur
-const uint8_t cmdNotFound[]; //contenant le message du commande non reconnue
+const uint8_t powerOn[]="Power ON\r\n"; //contenant le message d'allumage du moteur
+const uint8_t powerOff[]="Power OFF\r\n"; //contenant le message d'extinction du moteur
+const uint8_t cmdNotFound[]="Command not found\r\n"; //contenant le message du commande non reconnue
 uint32_t uartRxReceived; //flag de récéption d'un caractère sur la liaison uart
 uint8_t uartRxBuffer[UART_RX_BUFFER_SIZE]; //buffer de réception de donnée de l'uart
 uint8_t uartTxBuffer[UART_TX_BUFFER_SIZE]; //buffer d'émission des données de l'uart
@@ -95,6 +102,13 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	char	 	cmdBuffer[CMD_BUFFER_SIZE];
+	int 		idx_cmd;
+	char* 		argv[MAX_ARGS];
+	int		 	argc = 0;
+	char*		token;
+	int 		newCmdReady = 0;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -122,6 +136,16 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  memset(argv,NULL,MAX_ARGS*sizeof(char*));
+  memset(cmdBuffer,NULL,CMD_BUFFER_SIZE*sizeof(char));
+  memset(uartRxBuffer,NULL,UART_RX_BUFFER_SIZE*sizeof(char));
+  memset(uartTxBuffer,NULL,UART_TX_BUFFER_SIZE*sizeof(char));
+
+  HAL_UART_Receive_IT(&huart2, uartRxBuffer, UART_RX_BUFFER_SIZE);
+  HAL_Delay(10);
+  HAL_UART_Transmit(&huart2, started, sizeof(started), HAL_MAX_DELAY);
+  HAL_UART_Transmit(&huart2, prompt, sizeof(prompt), HAL_MAX_DELAY);
 
   /* USER CODE END 2 */
 

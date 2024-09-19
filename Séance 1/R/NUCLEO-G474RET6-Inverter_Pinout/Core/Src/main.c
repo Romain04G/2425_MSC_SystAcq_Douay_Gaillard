@@ -31,7 +31,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define CMD_BUFFER_SIZE 64
+#define UART_RX_BUFFER_SIZE 1
+#define UART_TX_BUFFER_SIZE 64
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,6 +52,20 @@ UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
+
+char cmd[CMD_BUFFER_SIZE]; //contenant la commande en cours
+int idxCmd; //contenant l'index du prochain caractère à remplir
+const uint8_t prompt[]; //contenant le prompt comme sur un shell linux
+const uint8_t started[]; //contenant un message de bienvenue au démarrage du microprocesseur
+const uint8_t newLine[]; //contenant la chaine de caractère pour faire un retour à la ligne
+const uint8_t help[]; //contenant le message d'aide, la liste des fonctions
+const uint8_t pinout[]; //contenant la liste des pin utilisées
+const uint8_t powerOn[]; //contenant le message d'allumage du moteur
+const uint8_t powerOff[]; //contenant le message d'extinction du moteur
+const uint8_t cmdNotFound[]; //contenant le message du commande non reconnue
+uint32_t uartRxReceived; //flag de récéption d'un caractère sur la liaison uart
+uint8_t uartRxBuffer[UART_RX_BUFFER_SIZE]; //buffer de réception de donnée de l'uart
+uint8_t uartTxBuffer[UART_TX_BUFFER_SIZE]; //buffer d'émission des données de l'uart
 
 /* USER CODE END PV */
 

@@ -37,6 +37,13 @@
 #define UART_TX_BUFFER_SIZE 64
 #define MAX_ARGS 9
 
+// LF = line feed, saut de ligne
+#define ASCII_LF 0x0A
+// CR = carriage return, retour chariot
+#define ASCII_CR 0x0D
+// DEL = delete
+#define ASCII_DEL 0x7F
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -91,7 +98,12 @@ static void MX_USART3_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+char	 	cmdBuffer[CMD_BUFFER_SIZE];
+int 		idx_cmd;
+char* 		argv[MAX_ARGS];
+int		 	argc = 0;
+char*		token;
+int 		newCmdReady = 0;
 /* USER CODE END 0 */
 
 /**
@@ -153,6 +165,57 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // uartRxReceived is set to 1 when a new character is received on uart 1
+	  	  	  if(uartRxReceived){
+	  	  		  switch(uartRxBuffer[0]){
+	  	  		  // Nouvelle ligne, instruction à traiter
+	  	  		  case ASCII_CR:
+	  	  			  HAL_UART_Transmit(&huart2, newLine, sizeof(newLine), HAL_MAX_DELAY);
+	  	  			  cmdBuffer[idx_cmd] = '\0';
+	  	  			  argc = 0;
+	  	  			  token = strtok(cmdBuffer, " ");
+	  	  			  while(token!=NULL){
+	  	  				  argv[argc++] = token;
+	  	  				  token = strtok(NULL, " ");
+	  	  			  }
+
+	  	  			  idx_cmd = 0;
+	  	  			  newCmdReady = 1;
+	  	  			  break;
+	  	  		  // Suppression du dernier caractère
+	  	  		  case ASCII_DEL:
+	  	  			  cmdBuffer[idx_cmd--] = '\0';
+	  	  			  HAL_UART_Transmit(&huart2, uartRxBuffer, UART_RX_BUFFER_SIZE, HAL_MAX_DELAY);
+	  	  			  break;
+	  	  	      // Nouveau caractère
+	  	  		  default:
+	  	  			  cmdBuffer[idx_cmd++] = uartRxBuffer[0];
+	  	  			  HAL_UART_Transmit(&huart2, uartRxBuffer, UART_RX_BUFFER_SIZE, HAL_MAX_DELAY);
+	  	  		  }
+	  	  		  uartRxReceived = 0;
+	  	  	  }
+
+	  	  	  if(newCmdReady){
+	  	  		  if(strcmp(argv[0],"set")==0){
+	  	  			  if(strcmp(argv[1],"PA5")==0){
+	  	  				  //HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, atoi(argv[2]));
+	  	  				  sprintf(uartTxBuffer,"Switch on/off led : %d\r\n",atoi(argv[2]));
+	  	  				  HAL_UART_Transmit(&huart2, uartTxBuffer, 32, HAL_MAX_DELAY);
+	  	  			  }
+	  	  			  else{
+	  	  				  HAL_UART_Transmit(&huart2, cmdNotFound, sizeof(cmdNotFound), HAL_MAX_DELAY);
+	  	  			  }
+	  	  		  }
+	  	  		  else if(strcmp(argv[0],"get")==0)
+	  	  		  {
+	  	  			  HAL_UART_Transmit(&huart2, cmdNotFound, sizeof(cmdNotFound), HAL_MAX_DELAY);
+	  	  		  }
+	  	  		  else{
+	  	  			  HAL_UART_Transmit(&huart2, cmdNotFound, sizeof(cmdNotFound), HAL_MAX_DELAY);
+	  	  		  }
+	  	  			  HAL_UART_Transmit(&huart2, prompt, sizeof(prompt), HAL_MAX_DELAY);
+	  	  			  newCmdReady = 0;
+	  	  	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -640,6 +703,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+
   }
   /* USER CODE END Error_Handler_Debug */
 }

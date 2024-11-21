@@ -86,6 +86,7 @@ const uint8_t powerOn[]="Power ON\r\n";
 const uint8_t powerOff[]="Power OFF\r\n";
 const uint8_t cmdNotFound[]="Command not found\r\n";
 const uint8_t wrongargument[]="You need 2 arguments\r\n";
+const uint8_t wrongvalue[]="argument need to be bethween 1 and 99 \r\n";
 
 uint32_t uartRxReceived; //flag de récéption d'un caractère sur la liaison uart
 uint8_t uartRxBuffer[UART_RX_BUFFER_SIZE]; //buffer de réception de donnée de l'uart
@@ -115,33 +116,27 @@ int		 	argc = 0;
 char*		token;
 int 		newCmdReady = 0;
 
-void control_speed(int dutycycle){
-	//int current_duty = (TIM1->CCR1)/(TIM1->ARR);
-	int targuet =dutycycle*(TIM1->ARR);
-	int ccr = (TIM1->CCR1);
-	//if ((TIM1->CCR1) < targuet){
-		while (ccr<targuet){
-			//current_duty += 1.023;
-			//int ccr = current_duty*(TIM1->ARR)/100;
-			ccr =ccr+10.23;
-			TIM1->CCR1 = ccr;
-			TIM1->CCR2 = 1023-ccr;
-			//current_duty = (TIM1->CCR1)/(TIM1->ARR);
+int control_speed(int dutycycle){
+	int current = 100*(TIM1->CCR1)/(TIM1->ARR);
+	if(current < dutycycle){
+		while(current < dutycycle){
+			TIM1->CCR1 += 10;
+			TIM1->CCR2 -= 10;
+			current = 100*(TIM1->CCR1)/(TIM1->ARR);
 			HAL_Delay(100);
 		}
-
-//	}
-//	else{
-//		while ((TIM1->CCR1)>targuet+10.23){
-//			//current_duty -= 1.023;
-//			//int ccr = current_duty*(TIM1->ARR)/100;
-//			ccr -= 10.23;
-//			TIM1->CCR1 = ccr;
-//			TIM1->CCR2 = 1023-ccr;
-//			//current_duty = (TIM1->CCR1)/(TIM1->ARR);
-//			HAL_Delay(1000);
-//		}
-//	}
+		return 1;
+	}
+	if(current > dutycycle){
+		while(current > dutycycle){
+			TIM1->CCR1 -= 10;
+			TIM1->CCR2 += 10;
+			current = 100*(TIM1->CCR1)/(TIM1->ARR);
+			HAL_Delay(100);
+		}
+		return 1;
+	}
+	return 1;
 }
 
 /* USER CODE END 0 */
@@ -162,6 +157,7 @@ int main(void)
 	int 		newCmdReady = 0;
 	uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim1);
 	uint32_t pulse_value = __HAL_TIM_GET_COMPARE(&htim1, TIM_CHANNEL_1);
+	int         dutycycle;
 
 	/* USER CODE END 1 */
 
@@ -246,6 +242,8 @@ int main(void)
 			}
 			else if (strcmp(argv[0], "start") == 0) {
 				HAL_UART_Transmit(&huart2, (uint8_t*)powerOn, strlen(powerOn), HAL_MAX_DELAY);
+				//TIM1->CCR1 = ;
+				//TIM1->CCR2 = 1023-;
 				HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 				HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
 				HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -263,10 +261,13 @@ int main(void)
 					HAL_UART_Transmit(&huart2, (uint8_t*)wrongargument, strlen(wrongargument), HAL_MAX_DELAY);
 				}
 				else {
-					//ARR = 1023
-					//dutycycle = CCR/ARR
-					int dutycycle = atoi(argv[1]);
-					control_speed(dutycycle);
+					dutycycle = atoi(argv[1]);
+					if( (0<dutycycle) && (dutycycle<100) ){
+						control_speed(dutycycle);
+					}
+					else {
+						HAL_UART_Transmit(&huart2, (uint8_t*)wrongvalue, strlen(wrongvalue), HAL_MAX_DELAY);
+					}
 				}
 			}
 			else{

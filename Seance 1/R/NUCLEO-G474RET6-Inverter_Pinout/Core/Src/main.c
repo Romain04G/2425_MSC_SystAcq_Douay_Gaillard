@@ -77,7 +77,8 @@ const uint8_t help[] = "Available commands:\r\n"
 		"2. pinout  : Show connected pins and their functions\r\n"
 		"3. start   : Turn on motor power stage\r\n"
 		"4. stop    : Turn off motor power stage\r\n"
-		"5. speed   : Modify the motor speed (enter a duty cycle)\r\n";
+		"5. speed   : Modify the motor speed (enter a duty cycle)\r\n"
+		"6. current : Give the current value in the motor\r\n";
 const uint8_t pinout[] = "Pinout information:\r\n"
 		"1. PA5  : GPIO Output (LED control)\r\n"
 		"2. PA0  : ADC Input (Sensor)\r\n"
@@ -168,6 +169,9 @@ int main(void)
 
 	/* USER CODE BEGIN Init */
 
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -242,8 +246,8 @@ int main(void)
 			}
 			else if (strcmp(argv[0], "start") == 0) {
 				HAL_UART_Transmit(&huart2, (uint8_t*)powerOn, strlen(powerOn), HAL_MAX_DELAY);
-				//TIM1->CCR1 = ;
-				//TIM1->CCR2 = 1023-;
+				TIM1->CCR1 = 512;
+				TIM1->CCR2 = 1023-512;
 				HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 				HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
 				HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -251,6 +255,7 @@ int main(void)
 			}
 			else if (strcmp(argv[0], "stop") == 0) {
 				HAL_UART_Transmit(&huart2, (uint8_t*)powerOff, strlen(powerOff), HAL_MAX_DELAY);
+				control_speed(50);
 				HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
 				HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
 				HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
@@ -269,6 +274,10 @@ int main(void)
 						HAL_UART_Transmit(&huart2, (uint8_t*)wrongvalue, strlen(wrongvalue), HAL_MAX_DELAY);
 					}
 				}
+			}
+			else if (strcmp(argv[0], "current") == 0) {
+				uint8_t raw_value = HAL_ADC_GetValue(&hadc1);
+				HAL_UART_Transmit(&huart2, (uint8_t*)raw_value, strlen(raw_value), HAL_MAX_DELAY);
 			}
 			else{
 				HAL_UART_Transmit(&huart2, cmdNotFound, sizeof(cmdNotFound), HAL_MAX_DELAY);

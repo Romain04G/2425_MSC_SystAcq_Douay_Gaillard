@@ -54,6 +54,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
+DMA_HandleTypeDef hdma_adc1;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
@@ -98,11 +99,15 @@ uint8_t uartTxBuffer[UART_TX_BUFFER_SIZE]; //buffer d'émission des données de 
 #define V_OFFSET 1.65f            // Tension de repos à courant nul
 #define SENSITIVITY 0.05f         // Sensibilité du capteur (en V/A)
 
+#define ADC_BUFFER_SIZE 1  // Nombre de canaux à convertir
+uint32_t adc_buffer[ADC_BUFFER_SIZE];  // Tampon pour les données ADC
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
@@ -146,11 +151,11 @@ int control_speed(int dutycycle){
 }
 
 float ConvertADCToCurrent(uint32_t adc_value) {
-    // Calcul de la tension en volts
-    float voltage = (adc_value / ADC_RESOLUTION) * VREF;
+	// Calcul de la tension en volts
+	float voltage = (adc_value / ADC_RESOLUTION) * VREF;
 
-    // Conversion en courant selon la fonction de transfert
-    return (voltage - V_OFFSET) / SENSITIVITY;
+	// Conversion en courant selon la fonction de transfert
+	return (voltage - V_OFFSET) / SENSITIVITY;
 }
 
 /* USER CODE END 0 */
@@ -185,6 +190,12 @@ int main(void)
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
+    // Démarrage du Timer en mode TRGO
+    HAL_TIM_Base_Start(&htim1);
+
+    // Démarrage de l'ADC en mode DMA
+    HAL_ADC_Start_DMA(&hadc1, adc_buffer, ADC_BUFFER_SIZE);
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -196,6 +207,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC2_Init();
   MX_ADC1_Init();
   MX_TIM1_Init();
@@ -290,23 +302,11 @@ int main(void)
 			}
 			else if (strcmp(argv[0], "current") == 0) {
 
-			    char buffer[50]; // Tampon pour formater les données
-			    uint32_t adc_value; // Valeur brute ADC
-			    float current;      // Courant calculé
-
-			    // Lire la valeur brute de l'ADC
-			    HAL_ADC_Start(&hadc1);                           // Démarrer la conversion
-			    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY); // Attendre la fin de la conversion
-			    adc_value = HAL_ADC_GetValue(&hadc1);            // Récupérer la valeur brute
-
-			    // Convertir en courant
-			    current = ConvertADCToCurrent(adc_value);
-
-			    // Formater la chaîne pour l'envoyer via UART
-			    sprintf(buffer, "ADC: %lu, Current: %.2f A\r\n", adc_value, current);
-
-			    // Transmettre via UART
-			    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+		        // Conversion complète : traiter les données
+		        char buffer[50];
+		        float voltage = (adc_buffer[0] / 4096.0f) * 3.3f;  // Convertir en tension
+		        sprintf(buffer, "Voltage (DMA): %.2f V\r\n", voltage);
+		        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
 
 			}
 			else{
@@ -396,12 +396,12 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T1_CC1;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -534,7 +534,7 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
@@ -719,6 +719,23 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE BEGIN USART3_Init 2 */
 
   /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMAMUX1_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 }
 

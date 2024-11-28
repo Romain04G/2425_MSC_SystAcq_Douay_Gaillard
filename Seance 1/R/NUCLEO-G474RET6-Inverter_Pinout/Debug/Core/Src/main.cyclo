@@ -1,6 +1,6 @@
-../Core/Src/main.c:125:5:control_speed	5
-../Core/Src/main.c:148:7:ConvertADCToCurrent	1
-../Core/Src/main.c:162:5:main	15
+../Core/Src/main.c:130:5:control_speed	5
+../Core/Src/main.c:153:7:ConvertADCToCurrent	1
+../Core/Src/main.c:167:5:main	15
 ../Core/Src/main.c:329:6:SystemClock_Config	3
 ../Core/Src/main.c:375:13:MX_ADC1_Init	4
 ../Core/Src/main.c:443:13:MX_ADC2_Init	3
@@ -8,7 +8,8 @@
 ../Core/Src/main.c:590:13:MX_TIM3_Init	3
 ../Core/Src/main.c:634:13:MX_USART2_UART_Init	5
 ../Core/Src/main.c:682:13:MX_USART3_UART_Init	5
-../Core/Src/main.c:730:13:MX_GPIO_Init	1
-../Core/Src/main.c:779:6:HAL_UART_RxCpltCallback	1
-../Core/Src/main.c:794:6:HAL_TIM_PeriodElapsedCallback	2
-../Core/Src/main.c:811:6:Error_Handler	1
+../Core/Src/main.c:728:13:MX_DMA_Init	1
+../Core/Src/main.c:747:13:MX_GPIO_Init	1
+../Core/Src/main.c:796:6:HAL_UART_RxCpltCallback	1
+../Core/Src/main.c:811:6:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:828:6:Error_Handler	1

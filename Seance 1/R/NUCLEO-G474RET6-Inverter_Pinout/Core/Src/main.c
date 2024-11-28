@@ -276,8 +276,27 @@ int main(void)
 				}
 			}
 			else if (strcmp(argv[0], "current") == 0) {
-				uint8_t raw_value = HAL_ADC_GetValue(&hadc1);
-				HAL_UART_Transmit(&huart2, (uint8_t*)raw_value, strlen(raw_value), HAL_MAX_DELAY);
+				//uint8_t raw_value = HAL_ADC_GetValue(&hadc1);
+				//HAL_UART_Transmit(&huart2, (uint8_t*)raw_value, strlen(raw_value), HAL_MAX_DELAY);
+
+			    char buffer[50];
+			    uint32_t adc_value;
+			    float current;      // Courant calculé
+
+			    // Lire la valeur ADC
+			    HAL_ADC_Start(&hadc1);                           // Démarrer la conversion
+			    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY); // Attendre la fin de la conversion
+			    adc_value = HAL_ADC_GetValue(&hadc1);            // Récupérer la valeur brute
+
+			    // Convertir en courant
+			    current = ConvertADCToCurrent(adc_value);
+
+			    // Formater les données dans une chaîne
+			    sprintf(buffer, "ADC Value: %lu, Current: %.2f A\r\n", adc_value, current);
+
+			    // Transmettre via UART
+			    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+
 			}
 			else{
 				HAL_UART_Transmit(&huart2, cmdNotFound, sizeof(cmdNotFound), HAL_MAX_DELAY);

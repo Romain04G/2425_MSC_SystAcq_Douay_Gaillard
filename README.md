@@ -15,5 +15,5 @@ Pour démarrer les PWMs, il faut appeler la fonction start dans le shell et la f
 Nous pouvons faire varier le rapport cyclique des PWMs à l'aide de la fonction (à écrire dans le shell) speed xx où est le rapport cyclique désirée.
 
 ### <ins>Troisième Partie: Récupération du courant et de la tension</ins>
-Afin de pouvoir asservir le moteur en courant en vitesse et en courant, il faut dans un premier temps récupérer leur valeur. 
+Afin de pouvoir asservir le moteur en courant en vitesse et en courant, il faut, dans un premier temps, récupérer leur valeur. Pour récupérer le courant, nous utilisons un ADC avec un DMA pour réaliser la mesure à intervalle régulier.
 

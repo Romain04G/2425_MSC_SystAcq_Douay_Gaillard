@@ -1,4 +1,4 @@
-# TP DE SYSTEME D'ACQUISITION ET DE COMMANDE
+# <ins>**TP DE SYSTEME D'ACQUISITION ET DE COMMANDE**</ins>
 ### Par Romain GAILLARD et Nicolas DOUAY
 ## <ins>But:</ins>
 Le but de ce TP est de commander un moteur à courant continu à l'aide de STM32. Le moteur sera contrôler à l'aide d'un terminal dans lequel nous entrerons nos requêtes comme la vitesse souhaitée. Le moteur va également être asservi en courant et en tension.

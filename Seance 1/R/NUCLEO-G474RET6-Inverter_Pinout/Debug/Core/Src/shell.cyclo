@@ -1,0 +1,4 @@
+../Core/Src/shell.c:58:6:StartShell	1
+../Core/Src/shell.c:73:6:Shell_Process	5
+../Core/Src/shell.c:107:6:New_Command	9
+../Core/Src/shell.c:143:6:HAL_UART_RxCpltCallback	1

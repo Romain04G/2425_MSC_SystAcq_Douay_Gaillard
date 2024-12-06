@@ -1,0 +1,4 @@
+../Core/Src/shell.c:58:6:StartShell	8	static
+../Core/Src/shell.c:73:6:Shell_Process	8	static
+../Core/Src/shell.c:107:6:New_Command	8	static
+../Core/Src/shell.c:143:6:HAL_UART_RxCpltCallback	16	static

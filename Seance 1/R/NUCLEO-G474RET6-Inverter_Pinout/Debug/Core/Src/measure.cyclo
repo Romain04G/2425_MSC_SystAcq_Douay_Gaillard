@@ -1,0 +1,4 @@
+../Core/Src/measure.c:31:6:StartADC	3
+../Core/Src/measure.c:58:6:HAL_ADC_ConvCpltCallback	3
+../Core/Src/measure.c:79:6:GetCurrent	1
+../Core/Src/measure.c:88:6:getSpeed	1

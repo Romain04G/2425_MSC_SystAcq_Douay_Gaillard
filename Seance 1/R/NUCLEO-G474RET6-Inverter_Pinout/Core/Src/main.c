@@ -126,6 +126,7 @@ int main(void)
 	// Démarrage du Timer en mode TRGO
 	HAL_TIM_Base_Start(&htim1);
 	StartShell();
+	StartADC();
   /* USER CODE END 2 */
 
   /* Infinite loop */
